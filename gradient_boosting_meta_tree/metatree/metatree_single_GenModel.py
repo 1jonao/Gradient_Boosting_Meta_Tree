@@ -444,10 +444,7 @@ class MetaTreeGenModel(base.Generative):
                 'bernoulli',
                 'categorical',
                 'normal',
-                'multivariate_normal',
                 'linearregression',
-                'poisson',
-                'exponential',
             ]
             model_list = [eval(modelname) for modelname in model_names]
             for model, model_name in zip(model_list, model_names):
