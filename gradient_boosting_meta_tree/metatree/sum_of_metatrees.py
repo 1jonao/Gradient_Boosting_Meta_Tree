@@ -20,11 +20,11 @@ from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor, R
 
 from .. import _check
 from .. import base
+from .. import bernoulli, categorical, normal, linearregression
 from .._exceptions import (CriteriaError, DataFormatError, ParameterFormatError,
                          ParameterFormatWarning, ResultWarning)
 
-# from metatree_single_GenModel import MetaTreeGenModel
-from .metatree_single_LearnModel import MetaTreeLearnModel # WARNING: 他のnormalとかのimportに則って.をつけたら動くが，取り除くとインポートできない．なぜかわからないので誰か教えて．
+from .metatree_single_LearnModel import MetaTreeLearnModel
 from ._metatree_weight import _weight_learning_rate, _proba_uniform, _proba_posterior, _proba_posterior_smooth_dirichletprior, _proba_posterior_smooth_exp_tilting
 from ._feature_subsample import _feature_subsample
 from ._data_subsample import _data_subsample_bootstrap, _data_subsample_goss_residual
