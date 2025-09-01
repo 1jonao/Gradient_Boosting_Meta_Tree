@@ -152,10 +152,10 @@ class MetaTreeLearnModel(base.Posterior,base.PredictiveMixin):
     """
     def __init__(
             self,
-            SubModel: Any, # TODO サブモデルクラスでの型アノテーション
+            SubModel: Any, # TODO: Type annotation for submodel class
             c_dim_continuous: int,
             c_dim_categorical: int,
-            c_max_depth: int, # TODO c_max_depth=0 causes error during broadcasting self.h0_split = np.ones(self.c_max_depth,dtype=float), it creates empty array.
+            c_max_depth: int, # TODO: c_max_depth=0 causes error during broadcasting self.h0_split = np.ones(self.c_max_depth,dtype=float), it creates empty array.
             c_num_children_vec: List or int = 2,
             c_feature_candidates: str or ArrayLike = 'all',
             c_num_assignment_vec: Optional[ArrayLike] = None,
@@ -279,7 +279,7 @@ class MetaTreeLearnModel(base.Posterior,base.PredictiveMixin):
         else: # TODO: dictのParameterFormat判定
             self.threshold_params['type'] = threshold_params['type']
             self.threshold_params['num_thresholds'] = threshold_params['num_thresholds']
-        self.threshold_generator = GenThresholdCandidates(self.rng) # WARNING: pythonのデータ構造としてのGeneratorではないため，名前が良くないかもしれない．
+    self.threshold_generator = GenThresholdCandidates(self.rng) # WARNING: The name may not be appropriate because it is not a Python Generator data structure.
 
         self.threshold_candidates = None
 
@@ -361,7 +361,7 @@ class MetaTreeLearnModel(base.Posterior,base.PredictiveMixin):
     ##########################
     # not yet finished
     ##########################
-    def calc_pred_dist(self): # build, update が終わったあとで，predictiveの計算を行う．まだ正規分布だけ．TODO:カテゴリカル，線形回帰への対応
+    def calc_pred_dist(self): # After build and update, calculate predictive distribution. Currently only normal distribution. TODO: Support for categorical and linear regression.
         for node in self.nodes_list:
             node.sub_model.calc_pred_dist()
             node.proba = np.prod([anc.hn_split for anc in node.c_ancestor_nodes]) * (1 - node.hn_split)
@@ -382,36 +382,35 @@ class MetaTreeLearnModel(base.Posterior,base.PredictiveMixin):
         method:str='recursive'  # 'recursive', 'iterative', or 'original'
         ):
         """
-        予測を行う関数（複数実装対応版）
+        Function for prediction (supports multiple implementations)
         
-        この実装では、3つの異なる方法で予測を行うことができます：
+        This implementation allows prediction in three different ways:
         
-        - original: 元の実装（各ノードで根ノードからの全分岐ルールを毎回適用）
-        - recursive: 再帰的最適化実装（木を辿りながら効率的に計算）
-        - iterative: 反復的最適化実装（再帰オーバーヘッドを排除）
+        - original: Original implementation (applies all split rules from root for each node)
+        - recursive: Recursive optimized implementation (efficient calculation by traversing the tree)
+        - iterative: Iterative optimized implementation (eliminates recursion overhead)
         
-        計算効率の比較：
-        - original: O(N×D×M) - N:サンプル数, D:木の深さ, M:ノード数
-        - recursive/iterative: O(N×D) - 大幅な効率改善
+        Computational efficiency comparison:
+        - original: O(N×D×M) - N: number of samples, D: tree depth, M: number of nodes
+        - recursive/iterative: O(N×D) - significant efficiency improvement
         
         Parameters
         ----------
         x_continuous_new : ArrayLike
-            予測対象の連続特徴量データ
+            Continuous feature data for prediction
         x_categorical_new : ArrayLike
-            予測対象のカテゴリカル特徴量データ
+            Categorical feature data for prediction
         loss : str, optional
-            損失関数の種類, by default 'squared'
+            Type of loss function, by default 'squared'
         method : str, optional
-            実装方法, by default 'recursive'
-            - 'original': 元の実装（比較用・教育用）
-            - 'recursive': 再帰的最適化実装
-            - 'iterative': 反復的最適化実装
-            
+            Implementation method, by default 'recursive'
+            - 'original': Original implementation (for comparison/education)
+            - 'recursive': Recursive optimized implementation
+            - 'iterative': Iterative optimized implementation
         Returns
         -------
         ArrayLike
-            予測値のベクトル
+            Vector of predicted values
         """
         x_continuous_new, x_categorical_new = self._check_sample_x(x_continuous_new, x_categorical_new)
         hat_y_vec = np.zeros(x_continuous_new.shape[0])
@@ -455,35 +454,35 @@ class MetaTreeLearnModel(base.Posterior,base.PredictiveMixin):
         loss: str
     ):
         """
-        元の予測実装（比較・教育目的）
+        Original prediction implementation (for comparison/education)
         
-        この実装は元のコードと同じロジックを使用しています。
-        各ノードに対して、根ノードからの全ての分岐ルールを毎回適用する方法です。
+        This implementation uses the same logic as the original code.
+        For each node, all split rules from the root are applied every time.
         
-        計算効率：O(N×D×M) - N:サンプル数, D:木の深さ, M:ノード数
+        Computational efficiency: O(N×D×M) - N: number of samples, D: tree depth, M: number of nodes
         
-        利点：
-        - シンプルで理解しやすい
-        - 各ノードが独立して処理される
-        - デバッグが容易
+        Advantages:
+        - Simple and easy to understand
+        - Each node is processed independently
+        - Easy to debug
         
-        欠点：
-        - 計算効率が悪い（同じ分岐ルールの重複適用）
-        - 木が深い・ノード数が多い場合に遅くなる
-        - メモリ効率も劣る
+        Disadvantages:
+        - Poor computational efficiency (redundant application of split rules)
+        - Slow for deep trees or many nodes
+        - Poor memory efficiency
         
         Parameters
         ----------
         x_continuous_new : ArrayLike
-            連続特徴量の新しいデータ
+            New continuous feature data
         x_categorical_new : ArrayLike
-            カテゴリカル特徴量の新しいデータ
+            New categorical feature data
         hat_y_vec : ArrayLike
-            予測値を蓄積する配列（in-place更新）
+            Array to accumulate predictions (in-place update)
         loss : str
-            損失関数の種類
+            Type of loss function
         """
-        # 元の実装：各ノードで根ノードからの全ての分岐ルールを毎回適用
+    # Original implementation: For each node, apply all split rules from the root every time
         for node in self.nodes_list:
             sample_indices_new, num_sample_new = self._get_data_indices_node_original(
                 node.c_data_region, 
@@ -501,49 +500,45 @@ class MetaTreeLearnModel(base.Posterior,base.PredictiveMixin):
         x_categorical: ArrayLike,
     ):
         """
-        元の実装：根ノードからの全ての分岐ルールを毎回適用してデータインデックスを取得
+        Original implementation: For each node, apply all split rules from the root every time to get data indices
         
-        この関数は、指定されたdata_regionに基づいて、どのサンプルが
-        特定のノードに割り当てられるかを判定します。
+        This function determines which samples are assigned to a specific node based on the given data_region.
         
-        計算効率：O(D×N) - D:根からの深さ, N:サンプル数
-        全ノードで呼び出されるため、全体では O(N×D×M) となります。
+        Computational efficiency: O(D×N) - D: depth from root, N: number of samples
+        Called for all nodes, so total is O(N×D×M).
         
-        アルゴリズム：
-        1. 全サンプルから開始（sample_indices = True）
-        2. data_region内の各分岐ルールを順次適用
-        3. 条件を満たすサンプルのみを残す
-        4. 最終的に残ったサンプルの数とマスクを返す
+        Algorithm:
+        1. Start from all samples (sample_indices = True)
+        2. Sequentially apply each split rule in data_region
+        3. Keep only samples that satisfy the conditions
+        4. Return the number and mask of remaining samples
         
         Parameters
         ----------
         data_region : List
-            根ノードから現在のノードまでの分岐ルールのリスト
-            各要素は ((feature_index, threshold), child_direction) の形式
+            List of split rules from root to current node
+            Each element is ((feature_index, threshold), child_direction)
         x_continuous : ArrayLike
-            連続特徴量データ
+            Continuous feature data
         x_categorical : ArrayLike
-            カテゴリカル特徴量データ
-            
+            Categorical feature data
         Returns
         -------
         sample_indices : ArrayLike
-            該当ノードに割り当てられるサンプルのブールマスク
+            Boolean mask of samples assigned to the node
         num_samples : int
-            該当ノードに割り当てられるサンプル数
-            
+            Number of samples assigned to the node
+        
         Notes
         -----
-        この実装では、各ノードで根ノードからの全ての分岐ルールを
-        毎回適用するため、計算の重複が発生します。
-        最適化版では、木を辿りながら増分的にマスクを更新することで
-        この重複を回避しています。
+        In this implementation, all split rules from the root are applied for each node, causing redundant computation.
+        The optimized version avoids this redundancy by incrementally updating the mask while traversing the tree.
         """
-        sample_indices = np.full(x_continuous.shape[0], True)  # 全サンプルから開始
+    sample_indices = np.full(x_continuous.shape[0], True)  # Start from all samples
 
         for reg in data_region:
-            # 親ノードでの分岐ルールを'全て'の学習データに適用し，
-            # 該当ノードに割り当てられる学習データのインデックスを得る
+            # Apply all split rules of the parent node to all training data
+            # Get indices of training data assigned to the node
             split_rule = reg[0]  # (feature_index, threshold)
             child_direction = reg[1]  # 左の子=0, 右の子=1, カテゴリカルなら値そのもの
             
@@ -551,16 +546,16 @@ class MetaTreeLearnModel(base.Posterior,base.PredictiveMixin):
                 categorical_feature_idx = split_rule[0] - self.c_dim_continuous
                 condition = (x_categorical[:, categorical_feature_idx] == child_direction)
             else:  # continuous feature
-                if child_direction == 0:  # 左の子（閾値以下）
+                if child_direction == 0:  # Left child (less than or equal to threshold)
                     condition = (x_continuous[:, split_rule[0]] <= split_rule[1])
-                else:  # 右の子（閾値より大きい）  
+                else:  # Right child (greater than threshold)
                     condition = (x_continuous[:, split_rule[0]] > split_rule[1])
             
-            # 現在の条件と新しい条件の両方を満たすサンプルのみを保持
+        # Keep only samples that satisfy both current and new conditions
             sample_indices = sample_indices & condition
         
-        num_samples = np.count_nonzero(sample_indices)
-        return sample_indices, num_samples
+    num_samples = np.count_nonzero(sample_indices)
+    return sample_indices, num_samples
         
     def _make_prediction_iterative(
         self,
@@ -742,99 +737,7 @@ class MetaTreeLearnModel(base.Posterior,base.PredictiveMixin):
         child_mask = child_mask & condition
         
         return child_mask
-    
-    def benchmark_prediction_methods(
-        self,
-        x_continuous_new: ArrayLike,
-        x_categorical_new: ArrayLike,
-        loss: str = 'squared',
-        methods: List[str] = ['original', 'recursive', 'iterative'],
-        n_trials: int = 5
-    ) -> Dict[str, float]:
-        """
-        3つの予測実装のパフォーマンスを比較するベンチマーク関数
-        
-        各実装の特徴：
-        - original: 元の実装（O(N×D×M)）- 各ノードで全分岐ルールを適用
-        - recursive: 再帰的最適化（O(N×D)）- 木を辿りながら効率的に計算  
-        - iterative: 反復的最適化（O(N×D)）- 再帰オーバーヘッドも排除
-        
-        Parameters
-        ----------
-        x_continuous_new : ArrayLike
-            予測対象の連続特徴量データ
-        x_categorical_new : ArrayLike
-            予測対象のカテゴリカル特徴量データ
-        loss : str, optional
-            損失関数の種類, by default 'squared'
-        methods : List[str], optional
-            測定する手法のリスト, by default ['original', 'recursive', 'iterative']
-        n_trials : int, optional
-            各手法の実行回数（平均値を算出）, by default 5
-            
-        Returns
-        -------
-        Dict[str, float]
-            各手法の平均実行時間（秒）
-        """
-        import time
-        
-        results = {}
-        x_continuous_new, x_categorical_new = self._check_sample_x(x_continuous_new, x_categorical_new)
-        
-        print(f"ベンチマーク開始: {len(methods)}つの手法を{n_trials}回ずつ実行")
-        print(f"データサイズ: {x_continuous_new.shape[0]} サンプル")
-        print(f"木の情報: {len(self.nodes_list)} ノード, 最大深度: {self.c_max_depth}")
-        print("-" * 60)
-        
-        for method in methods:
-            try:
-                times = []
-                
-                # 複数回実行して平均を取る
-                for trial in range(n_trials):
-                    start_time = time.time()
-                    _ = self.make_prediction(x_continuous_new, x_categorical_new, loss, method)
-                    end_time = time.time()
-                    times.append(end_time - start_time)
-                
-                avg_time = np.mean(times)
-                std_time = np.std(times)
-                min_time = np.min(times)
-                max_time = np.max(times)
-                
-                results[method] = {
-                    'avg_time': avg_time,
-                    'std_time': std_time,
-                    'min_time': min_time,
-                    'max_time': max_time,
-                    'all_times': times
-                }
-                
-                print(f"{method:>10} method: {avg_time:.6f} ± {std_time:.6f} seconds")
-                print(f"{'':>10}          (min: {min_time:.6f}, max: {max_time:.6f})")
-                
-            except Exception as e:
-                results[method] = {'error': str(e)}
-                print(f"{method:>10} method failed: {e}")
-        
-        # 相対性能の比較
-        if len([k for k in results.keys() if 'error' not in results[k]]) >= 2:
-            print("-" * 60)
-            print("相対性能比較:")
-            
-            # 基準となる最も遅い手法を見つける
-            valid_methods = {k: v for k, v in results.items() if 'error' not in v}
-            if valid_methods:
-                slowest_time = max(v['avg_time'] for v in valid_methods.values())
-                
-                for method, result in valid_methods.items():
-                    if 'avg_time' in result:
-                        speedup = slowest_time / result['avg_time']
-                        print(f"{method:>10}: {speedup:.2f}倍高速")
-        
-        return results
-    
+
     def pred_and_update(self):
         return
     def set_h0_params(self,

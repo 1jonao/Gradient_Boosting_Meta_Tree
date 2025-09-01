@@ -12,9 +12,9 @@ class GenThresholdCandidates():
         x_continuous_vecs: np.ndarray,
         feature: int,
         num_thresholds: None,
-        ): # FIXME: feature = -1でも動いてしまう
+    ): # FIXME: It works even when feature = -1
         thresholds = np.sort(x_continuous_vecs[:,feature])[:-1]
-        thresholds = np.unique(thresholds) # 同一の閾値を除外
+    thresholds = np.unique(thresholds) # Remove duplicate thresholds
         return thresholds
     
     def by_histogram(
@@ -37,7 +37,7 @@ class GenThresholdCandidates():
           return np.array([x_min])
         else:
           thresholds = np.arange(x_min + (x_max-x_min) / (_num_thresholds + 1), x_max, (x_max - x_min) / (_num_thresholds + 1))
-          thresholds = np.unique(thresholds) # 同一の閾値を除外
+          thresholds = np.unique(thresholds) # Remove duplicate thresholds
           return thresholds[:_num_thresholds]
         
     def by_quantile(
@@ -53,7 +53,7 @@ class GenThresholdCandidates():
         step = 100 / (num_thresholds + 1)
         percintiles = np.arange(0,100 + step, step)[1:-1]
         thresholds = np.percentile(x_continuous_vecs[:,feature],percintiles)
-        thresholds = np.unique(thresholds) # 同一の閾値を除外
+    thresholds = np.unique(thresholds) # Remove duplicate thresholds
         return thresholds
     
     def by_random(
@@ -65,7 +65,7 @@ class GenThresholdCandidates():
         x_min = np.min(x_continuous_vecs[:,feature])
         x_max = np.max(x_continuous_vecs[:,feature])
         thresholds = self.rng.uniform(x_min,x_max,num_thresholds)
-        thresholds = np.unique(thresholds) # 同一の閾値を除外
+    thresholds = np.unique(thresholds) # Remove duplicate thresholds
         return thresholds
 
 if __name__ == '__main__':

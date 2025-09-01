@@ -48,14 +48,14 @@ def _feature_subsample(feature_candidates_vec:list,max_features:Union[str,int,No
     else:
         raise(ParameterFormatError('max_features can only take None(all features), \'log2\', \'sqrt\', or an int number no bigger than dim_features.'))
     return sorted(features_vec)
-# より厳密に書くなら，num_features > |set(feature_candidates_vec)|の場合分けが必要
+# For a more rigorous implementation, it is necessary to handle the case where num_features > |set(feature_candidates_vec)|.
 
 def _feature_subsample_by_corrcoef_y(
     feature_candidates_vec: List[int],
     x_continuous_vecs: np.ndarray,
     x_categorical_vecs: np.ndarray,
     y_vec: np.ndarray,
-    m: int # 取り出す特長量のインデックス数
+    m: int # Number of feature indices to extract
 ):
     x_vecs = np.empty([y_vec.shape[0],x_continuous_vecs.shape[1]+x_categorical_vecs.shape[1]])
     x_vecs[:,:x_continuous_vecs.shape[1]] = x_continuous_vecs
@@ -71,8 +71,8 @@ def _feature_subsample_by_corrcoef_x(
     feature_candidates_vec: List[int],
     x_continuous_vecs: np.ndarray,
     x_categorical_vecs: np.ndarray,
-    k_parent: int, # (直前の)親ノードのk
-    m: int # 取り出す特長量のインデックス数
+    k_parent: int,
+    m: int # number of features to select
 ):
     x_vecs = np.empty([x_continuous_vecs.shape[0],x_continuous_vecs.shape[1]+x_categorical_vecs.shape[1]])
     x_vecs[:,:x_continuous_vecs.shape[1]] = x_continuous_vecs
@@ -86,11 +86,6 @@ def _feature_subsample_by_corrcoef_x(
     return [index for index in indices_sort if index in feature_candidates_vec][:m]
 
 if __name__ == '__main__':
-    # DIM_FEATURES = 9
-    # a = [i for i in range(DIM_FEATURES-3)]
-    # b = [1,1,2,3,4,4,4,5,5,5,6,7,8,9]
-
-    # print(feature_subsample_random(b,3,None))
     rng = np.random.default_rng(0)
     DIM_FEATURES = 9
     a = [i for i in range(DIM_FEATURES-3)]
@@ -100,13 +95,6 @@ if __name__ == '__main__':
 
     print(feature_subsample_random(b,3,None))
 
-    # print(_feature_subsample(b,None,DIM_FEATURES,0))
-    # print(f"log2K:{np.ceil(math.log2(DIM_FEATURES))}")
-    # print(_feature_subsample(b,"log2",DIM_FEATURES,0))
-    # print(f"sqrt:{np.ceil(np.sqrt(DIM_FEATURES))}")
-    # print(_feature_subsample(b,"sqrt",DIM_FEATURES,0))
-    # print(f"max_features:{5}")
-    # print(_feature_subsample(b,5,DIM_FEATURES,0))
     NUM_DATA = 10
     DIM_CONTINUOUS = 3
     DIM_CATEGORICAL = 2
@@ -115,9 +103,9 @@ if __name__ == '__main__':
     x_continuous = np.random.random((NUM_DATA,DIM_CONTINUOUS))
     x_categorical = np.random.randint(0,2,(NUM_DATA,DIM_CATEGORICAL))
     y = np.random.random(NUM_DATA)
-    x_continuous[:,1] = 2*y # 相関が1の説明変数
+    x_continuous[:,1] = 2*y # Explanatory variable with correlation 1
 
-    # 相関の絶対値: [0.32878093 1.         0.03077294 0.46942874 0.02022813]
+    # Absolute values of correlation: [0.32878093 1.         0.03077294 0.46942874 0.02022813]
     indices = _feature_subsample_by_corrcoef_y(
         feature_candidates_vec=[0,1,2,3,4],
         x_continuous_vecs=x_continuous,
@@ -125,7 +113,7 @@ if __name__ == '__main__':
         y_vec=y,
         m=3
     )
-    print(indices) # [1,3,0]のはず
+    print(indices) # Should be [1,3,0]
 
     indices = _feature_subsample_by_corrcoef_y(
         feature_candidates_vec=[0,2,3,4],
@@ -134,9 +122,9 @@ if __name__ == '__main__':
         y_vec=y,
         m=3
     )
-    print(indices) # [3,0,2]のはず
+    print(indices) # Should be [3,0,2]
 
-    # 相関係数: [-0.32878093  1.         -0.03077294 0.46942874  0.02022813]
+    # Correlation coefficients: [-0.32878093  1.         -0.03077294 0.46942874  0.02022813]
     indices = _feature_subsample_by_corrcoef_x(
         feature_candidates_vec=[0,1,2,3,4],
         x_continuous_vecs=x_continuous,
@@ -144,7 +132,7 @@ if __name__ == '__main__':
         k_parent=1,
         m=3
     )
-    print(indices) # [0,2,4]のはず
+    print(indices) # Should be [0,2,4]
 
     indices = _feature_subsample_by_corrcoef_x(
         feature_candidates_vec=[0,1,2,3],
@@ -153,4 +141,4 @@ if __name__ == '__main__':
         k_parent=1,
         m=3
     )
-    print(indices) # [0,2,3]のはず
+    print(indices) # Should be [0,2,3]

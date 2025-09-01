@@ -66,11 +66,11 @@ def parse_json_tree(tree, path):
     }
     tree_to_dict[path] = node_info
 
-    # 子ノードがある場合、再帰的に処理
+    # If there are child nodes, process recursively
     children = tree.get('children', [])
     if children:
-        tree_to_dict.update(parse_json_tree(children[0], path + '0'))  # 左の子
-        tree_to_dict.update(parse_json_tree(children[1], path + '1'))  # 右の子
+        tree_to_dict.update(parse_json_tree(children[0], path + '0'))  # Left child
+        tree_to_dict.update(parse_json_tree(children[1], path + '1'))  # Right child
 
     return tree_to_dict
 
@@ -97,7 +97,7 @@ class SumOfMetaTreeLearnModel(base.Posterior,base.PredictiveMixin):
     def __init__(
         self,
         c_num_metatrees: int,
-        SubModel: Any, # TODO サブモデルクラスでの型アノテーション
+    SubModel: Any, # TODO: Type annotation for submodel class
         c_dim_continuous: int,
         c_dim_categorical: int,
         c_max_depth: int, # TODO c_max_depth=0 causes error during broadcasting self.h0_split = np.ones(self.c_max_depth,dtype=float), it creates empty array.
@@ -118,8 +118,8 @@ class SumOfMetaTreeLearnModel(base.Posterior,base.PredictiveMixin):
     h0_metatree_weight_smoothness: Union[np.ndarray, float] = 0.,
         feature_subsample:Optional[str]=None,
         target_function:Optional[str]=None,
-        tree_criterion:str='squared_error_leaf', # NOTE: sklearnではfriedman_mseがあるが，まだsquared_errorのみで進める．
-        # FIXME: target_functionとtree_criterionで'squared_error'を共有していてややこしい．
+    tree_criterion:str='squared_error_leaf', # NOTE: sklearn has friedman_mse, but currently only squared_error is used.
+    # FIXME: Sharing 'squared_error' between target_function and tree_criterion is confusing.
         lambda_xgb:float = 1.,
         gamma_xgb:float = 0.,
         seed: Optional[int] = None,
@@ -175,7 +175,7 @@ class SumOfMetaTreeLearnModel(base.Posterior,base.PredictiveMixin):
             self.h0_feature_weight_vec = _check.proba_vec(h0_feature_weight_vec,'h0_feature_weight_vec',ParameterFormatError)
 
         # thresholds
-        self.threshold_params = threshold_params # TODO: dictのParameterFormat判定
+        self.threshold_params = threshold_params # TODO: Check ParameterFormat for dict
 
         # data_subsample
         if data_subsample_params is None:
@@ -183,7 +183,7 @@ class SumOfMetaTreeLearnModel(base.Posterior,base.PredictiveMixin):
         else:
             self.data_subsample_params = data_subsample_params
 
-        if h0_metatree_list is None: # FIXME: []を入れるとそのまま入力した空配列が使われるが，メモリ共有の問題が起こる．
+        if h0_metatree_list is None: # FIXME: If you put [], the empty array you entered will be used as is, but memory sharing problems will occur.
             self.h0_metatree_list = []
         else:
             self.h0_metatree_list = h0_metatree_list
@@ -520,7 +520,7 @@ class SumOfMetaTreeLearnModel(base.Posterior,base.PredictiveMixin):
                 threshold_params = self.threshold_params,
                 lambda_xgb = self.lambda_xgb,
                 gamma_xgb = self.gamma_xgb,
-                seed = self.seed, # TODO: rngをそのまま渡したい．
+                seed = self.seed, # TODO: Want to pass rng directly.
             )
             self.hn_metatree_list[i].build(
                 self.x_continuous_vecs[tmp_indices],
@@ -575,7 +575,7 @@ class SumOfMetaTreeLearnModel(base.Posterior,base.PredictiveMixin):
         self._init_weight(num_trees_built)
         pred_built = self.calc_pred_from_metatree_list(num_trees_built)
         if self.SubModel in REG_MODELS:
-            residual_vec = self.y_vec - pred_built # WARNING: たぶん回帰;二乗誤差のみでしか動かない．
+            residual_vec = self.y_vec - pred_built # WARNING: Probably regression; only works with squared error.
         else:
             raise(ParameterFormatError,'Regression models are only supported at this moment.')
         
@@ -620,7 +620,7 @@ class SumOfMetaTreeLearnModel(base.Posterior,base.PredictiveMixin):
                 threshold_params = self.threshold_params,
                 lambda_xgb = self.lambda_xgb,
                 gamma_xgb = self.gamma_xgb,
-                seed = self.seed, # TODO: rngをそのまま渡したい．
+                seed = self.seed, # TODO: Want to pass rng directly.
             )
             self.hn_metatree_list[i].build(
                 self.x_continuous_vecs[tmp_indices],
@@ -731,24 +731,24 @@ class SumOfMetaTreeLearnModel(base.Posterior,base.PredictiveMixin):
             num_trees_built: int,
             loss: str,
     ) -> np.ndarray:
-        # WARNING: yに対しての予測を行うべきでは？
+    # WARNING: Shouldn't prediction be made for y?
         pred_new_tree = self.hn_metatree_list[num_trees_built-1].make_prediction(self.x_continuous_vecs,self.x_categorical_vecs,loss=loss)
         self.pred_new_tree_list.append(pred_new_tree)
         # pred_built_debug = np.array([np.sum([self.pred_new_tree_list[b][i] for b in range(num_trees_built)])/(num_trees_built+1) for i in range(self.y_vec.shape[0])])
         if self.metatree_weight_type_build == 'learning_rate':
             residual_vec -= self.metatree_weights_build[num_trees_built-1] * pred_new_tree
             training_error = (residual_vec**2).mean()
-        elif self.metatree_weight_type_build.startswith('proba'): # NOTE: 'proba' in __のほうが速いが，前方一致のほうがバグの混入少ないと判断．
+        elif self.metatree_weight_type_build.startswith('proba'): # NOTE: 'proba' in __ is faster, but prefix match is less likely to introduce bugs.
             pred_built = self.update_pred_proba(pred_built, pred_new_tree, self.metatree_weight_type_build, num_trees_built=num_trees_built)
-            if self.metatree_weight_build_is_compress: # TODO: is_compressまわりは議論が必要
+            if self.metatree_weight_build_is_compress: # TODO: Discussion needed around is_compress
                 training_error = ((self.y_vec - pred_built)**2).mean()
                 if self.metatree_weight_build_newtree == 'num_tree':
                     pred_built_compressed = pred_built * (num_trees_built) / (num_trees_built+1)
-                    residual_vec = (self.y_vec - pred_built_compressed) * (num_trees_built+1) # NOTE: もともとのyに近い大きさになるように分母を掛け直す．特に議論が必要．
+                    residual_vec = (self.y_vec - pred_built_compressed) * (num_trees_built+1) # NOTE: Multiply denominator to make it close to original y; needs discussion.
                     # residual_vec = (self.y_vec - pred_built)
                 else:
                     pred_built_compressed = pred_built * (1 - self.metatree_weight_build_newtree)
-                    residual_vec = (self.y_vec - pred_built_compressed) / self.metatree_weight_build_newtree # NOTE: もともとのyに近い大きさになるように分母を掛け直す．特に議論が必要．
+                    residual_vec = (self.y_vec - pred_built_compressed) / self.metatree_weight_build_newtree # NOTE: Divide denominator to make it close to original y; needs discussion.
                     # residual_vec = (self.y_vec - pred_built)
             else:
                 residual_vec = (self.y_vec - pred_built) * (num_trees_built)
@@ -798,7 +798,7 @@ class SumOfMetaTreeLearnModel(base.Posterior,base.PredictiveMixin):
             if SklearnEnsembleObj in [RandomForestRegressor, RandomForestClassifier]:
                 sklearn_tree = sklearn_estimator.estimators_[i-num_trees_built]
             elif SklearnEnsembleObj in [GradientBoostingRegressor, GradientBoostingClassifier]:
-                sklearn_tree = sklearn_estimator.estimators_[i-num_trees_built][0] # NOTE: なぜかGradientBoostingRegressor.estimators_は二重配列
+                sklearn_tree = sklearn_estimator.estimators_[i-num_trees_built][0] # NOTE: For some reason, GradientBoostingRegressor.estimators_ is a double array
             self.hn_metatree_list[i] = MetaTreeLearnModel(
                 SubModel=self.SubModel,
                 c_dim_continuous = self.c_dim_continuous,
@@ -813,7 +813,7 @@ class SumOfMetaTreeLearnModel(base.Posterior,base.PredictiveMixin):
                 threshold_params = self.threshold_params,
                 lambda_xgb = self.lambda_xgb,
                 gamma_xgb = self.gamma_xgb,
-                seed = self.seed, # TODO: rngをそのまま渡したい．
+                seed = self.seed, # TODO: Want to pass rng directly.
             )
 
             if update_leaf_with_residual:
@@ -861,7 +861,7 @@ class SumOfMetaTreeLearnModel(base.Posterior,base.PredictiveMixin):
             list_of_model_dict = parse_xgb_json_model(xgb_file_path)
             # model_dict = parse_xgb_model(xgb_file_path)
             # sequentially copy metatrees
-            for i in range(num_trees_built, self.c_num_metatrees): # NOTE: early_stopping (xgbの木の本数がc_num_metatreesよりも少ない場合) には非対応
+            for i in range(num_trees_built, self.c_num_metatrees): # NOTE: early_stopping (when the number of xgb trees is less than c_num_metatrees) is not supported
                 self.hn_metatree_list[i] = MetaTreeLearnModel(
                     SubModel=self.SubModel,
                     c_dim_continuous = self.c_dim_continuous,
@@ -876,7 +876,7 @@ class SumOfMetaTreeLearnModel(base.Posterior,base.PredictiveMixin):
                     threshold_params = self.threshold_params,
                     lambda_xgb = self.lambda_xgb,
                     gamma_xgb = self.gamma_xgb,
-                    seed = self.seed, # TODO: rngをそのまま渡したい．
+                    seed = self.seed, # TODO: Want to pass rng directly.
                 )
                 self.hn_metatree_list[i].build(
                     x_continuous_vecs=self.x_continuous_vecs,

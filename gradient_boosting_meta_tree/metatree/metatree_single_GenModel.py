@@ -30,7 +30,7 @@ class _GenNode:
     def __init__(
             self,
             rng: np.random.Generator,
-            # SubModel: Any, # TODO サブモデルクラスでの型アノテーション
+            # SubModel: Any, # TODO: Type annotation for submodel class
             c_id: str, # ID with binary index. Root node has index with empty str ''.
             c_depth: int,
             h_split: float, # <- h_g
@@ -79,12 +79,12 @@ class _GenNode:
         else:
             self.sub_params = sub_params
         self.rng = rng
-        # 全てのノードでサブモデルは定義しない．後で葉ノードについて定義する
+    # Do not define submodel for all nodes. Define later for leaf nodes.
         self.sub_model = None
     
     def _prepare_sub_model(
             self,
-            SubModel: Any, # TODO サブモデルクラスでの型アノテーション
+            SubModel: Any, # TODO: Type annotation for submodel class
             # h_constants_SubModel: Optional[Dict] = {},
             # sub_h_params: Optional[Dict] = {},
     ):
@@ -141,7 +141,7 @@ class _GenNode:
             c_dim_continuous: int,
             c_dim_categorical: int,
             ):
-        if self._split_rule[0] < c_dim_continuous: # continuous, TODO: 多値閾値への拡張
+    if self._split_rule[0] < c_dim_continuous: # continuous, TODO: Extend to multi-valued thresholds
             return 1 if (x_continuous[self._split_rule[0]] >= self._split_rule[1]) else 0
         else: # categorical
             return x_categorical[self._split_rule[0] - c_dim_continuous]
@@ -220,10 +220,10 @@ class MetaTreeGenModel(base.Generative):
     """
     def __init__(
             self,
-            SubModel: Any, # TODO サブモデルクラスでの型アノテーション
+            SubModel: Any, # TODO: Type annotation for submodel class
             c_dim_continuous: int,
             c_dim_categorical: int,
-            c_max_depth: int, # TODO c_max_depth=0 causes error during broadcasting self.h0_split = np.ones(self.c_max_depth,dtype=float), it creates empty array.
+            c_max_depth: int, # TODO: c_max_depth=0 causes error during broadcasting self.h0_split = np.ones(self.c_max_depth,dtype=float), it creates empty array.
             c_ranges: Optional[np.ndarray] = None,
             c_num_children_vec: List or int = 2,
             c_feature_candidates: Optional[List[int]] = None,
@@ -286,7 +286,7 @@ class MetaTreeGenModel(base.Generative):
         # valuables which can be updated, from the input
         if type(h_split) == float:
             self.h_split = _check.float_in_closed01(h_split,'h_split',ParameterFormatError)
-            self.h_split_list = np.full(self.c_max_depth+1, self.h_split, dtype=float) # TODO ノード深さを根ノードで0とするか1とするか決定
+            self.h_split_list = np.full(self.c_max_depth+1, self.h_split, dtype=float) # TODO: Decide whether to set root node depth to 0 or 1.
         else:
             tmp = _check.one_dimensional_array_with_length(h_split,'h_split',self.c_max_depth+1, ParameterFormatError)
             self.h_split_list = _check.float_in_closed01_vec(tmp,'h_split',ParameterFormatError)
@@ -560,7 +560,7 @@ class MetaTreeGenModel(base.Generative):
             * ``"c_num_assignment_vec"`` : the value of ``self.c_num_assignment_vec``
             * ``"c_ranges"`` : the value of ``self.c_ranges``
         """
-        # パラメータ入力値の処理 TODO imput_paramみたいな関数を用意したほうが良いかも
+    # Handle parameter input values. TODO: Consider preparing a function like imput_param.
         if seed is None: # use self.rng 
             pass
         else:
@@ -599,14 +599,14 @@ class MetaTreeGenModel(base.Generative):
                 node.is_leaf = self.rng.choice(a=(True,False), p=(1-node.h_split, node.h_split))
             else:
                 exit(-1)
-            if node.is_leaf: # stop splitting and go to next node in leaf_nodes_to_split
+            if node.is_leaf: # Stop splitting and go to next node in leaf_nodes_to_split
                 leaf_nodes_end.append(node)
                 continue
             self._split_node(node)
             self.inner_nodes_list.append(node)
-            for child in reversed(node.children): # 左側のノード(インデックス番号小)から先に降りる（過去の実装と同様）になるように逆順にleaf_nodesに追加
+            for child in reversed(node.children): # Add to leaf_nodes in reverse order so that we descend from the left node (smaller index) first (same as previous implementation)
                 # if node.children is empty, i.e. node is a leaf_node, this loop won't be processed  
-                leaf_nodes_to_split.append(child) # add children to top right in the stack
+                leaf_nodes_to_split.append(child) # Add children to top right in the stack
                 self.nodes_list.append(child)
         self.leaf_nodes_list = list(leaf_nodes_end)
         return self
@@ -630,21 +630,21 @@ class MetaTreeGenModel(base.Generative):
 
             self._split_node(node)
             self.inner_nodes_list.append(node)
-            for child in node.children: # 左側のノード(インデックス番号小)から先に降りる（過去の実装と同様）になるように逆順にleaf_nodesに追加
+            for child in node.children: # Add to leaf_nodes in reverse order so that we descend from the left node (smaller index) first (same as previous implementation)
                 # if node.children is empty, i.e. node is a leaf_node, this loop won't be processed  
-                leaf_nodes_to_split.append(child) # add children to top right in the que
+                leaf_nodes_to_split.append(child) # Add children to top right in the queue
                 self.nodes_list.append(child)
         self.leaf_nodes_list = list(leaf_nodes_end)
         return self
     
     ##########################################
     # split gen node 
-    # TODO split関数をメタツリー/ノードどちらのメソッドとして実装するか決定
+    # TODO: Decide whether to implement split function as a method of MetaTree or Node.
     ##########################################
     def _gen_split_rule_node(
             self,
             node: _GenNode
-        ): # TODO: 同じ連続特徴量での分岐が複数回起こる場合に意味のない分岐（絶対に訪れることのない葉ノード）が発生する.
+    ): # TODO: If multiple splits occur on the same continuous feature, meaningless splits (leaf nodes that are never visited) may be generated.
 
         tmp = [self.h_feature_weight_vec[i] for i in node.c_feature_candidates]
         prob_feature = tmp / np.sum(tmp)
@@ -869,7 +869,7 @@ class MetaTreeGenModel(base.Generative):
             x_continuous: Optional[np.ndarray] = None,
             x_categorical: Optional[np.ndarray] = None
             ) -> Tuple[np.ndarray, np.ndarray]:
-        # x_continuous, x_categoricalがNoneの場合は新規生成
+    # If x_continuous or x_categorical is None, generate new data.
         if x_continuous is not None:
             if not isinstance(x_continuous, np.ndarray):
                 x_continuous = np.array(x_continuous)
@@ -988,7 +988,7 @@ class MetaTreeGenModel(base.Generative):
             x_continuous: np.ndarray,
             x_categorical: np.ndarray,
     ):
-        indices = np.full(x_continuous.shape[0], True) # np.onesよりも速い
+    indices = np.full(x_continuous.shape[0], True) # Faster than np.ones
         for reg in node.c_data_region:
             if reg[0][1] is None: # threshold is None -> categorical
                 indices = indices * (x_categorical[:,reg[0][0]-self.c_dim_continuous] == reg[1])
@@ -1002,7 +1002,7 @@ class MetaTreeGenModel(base.Generative):
             x_continuous: Optional[np.ndarray] = None,
             x_categorical: Optional[np.ndarray] = None,
             ):
-        # x_continuous, x_categoricalがNoneの場合は_uniformで生成
+    # If x_continuous or x_categorical is None, generate with _uniform.
         if (x_continuous is None) or (x_categorical is None):
             x_continuous_gen, x_categorical_gen = self._gen_x_uniform(sample_size=sample_size)
             x_continuous = x_continuous_gen
