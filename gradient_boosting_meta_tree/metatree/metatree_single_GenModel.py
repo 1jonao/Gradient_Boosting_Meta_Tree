@@ -141,7 +141,7 @@ class _GenNode:
             c_dim_continuous: int,
             c_dim_categorical: int,
             ):
-    if self._split_rule[0] < c_dim_continuous: # continuous, TODO: Extend to multi-valued thresholds
+        if self._split_rule[0] < c_dim_continuous: # continuous, TODO: Extend to multi-valued thresholds
             return 1 if (x_continuous[self._split_rule[0]] >= self._split_rule[1]) else 0
         else: # categorical
             return x_categorical[self._split_rule[0] - c_dim_continuous]
@@ -988,7 +988,7 @@ class MetaTreeGenModel(base.Generative):
             x_continuous: np.ndarray,
             x_categorical: np.ndarray,
     ):
-    indices = np.full(x_continuous.shape[0], True) # Faster than np.ones
+        indices = np.full(x_continuous.shape[0], True) # Faster than np.ones
         for reg in node.c_data_region:
             if reg[0][1] is None: # threshold is None -> categorical
                 indices = indices * (x_categorical[:,reg[0][0]-self.c_dim_continuous] == reg[1])

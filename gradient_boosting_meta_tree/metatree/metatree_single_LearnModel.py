@@ -279,7 +279,7 @@ class MetaTreeLearnModel(base.Posterior,base.PredictiveMixin):
         else: # TODO: dictのParameterFormat判定
             self.threshold_params['type'] = threshold_params['type']
             self.threshold_params['num_thresholds'] = threshold_params['num_thresholds']
-    self.threshold_generator = GenThresholdCandidates(self.rng) # WARNING: The name may not be appropriate because it is not a Python Generator data structure.
+        self.threshold_generator = GenThresholdCandidates(self.rng) # WARNING: The name may not be appropriate because it is not a Python Generator data structure.
 
         self.threshold_candidates = None
 
@@ -534,7 +534,7 @@ class MetaTreeLearnModel(base.Posterior,base.PredictiveMixin):
         In this implementation, all split rules from the root are applied for each node, causing redundant computation.
         The optimized version avoids this redundancy by incrementally updating the mask while traversing the tree.
         """
-    sample_indices = np.full(x_continuous.shape[0], True)  # Start from all samples
+        sample_indices = np.full(x_continuous.shape[0], True)  # Start from all samples
 
         for reg in data_region:
             # Apply all split rules of the parent node to all training data
@@ -550,12 +550,12 @@ class MetaTreeLearnModel(base.Posterior,base.PredictiveMixin):
                     condition = (x_continuous[:, split_rule[0]] <= split_rule[1])
                 else:  # Right child (greater than threshold)
                     condition = (x_continuous[:, split_rule[0]] > split_rule[1])
-            
-        # Keep only samples that satisfy both current and new conditions
+                
+            # Keep only samples that satisfy both current and new conditions
             sample_indices = sample_indices & condition
-        
-    num_samples = np.count_nonzero(sample_indices)
-    return sample_indices, num_samples
+            
+        num_samples = np.count_nonzero(sample_indices)
+        return sample_indices, num_samples
         
     def _make_prediction_iterative(
         self,
@@ -1770,4 +1770,3 @@ class MetaTreeLearnModel(base.Posterior,base.PredictiveMixin):
                 ) for i in range(2)
             ]
         return
-
