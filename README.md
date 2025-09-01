@@ -2,7 +2,9 @@
 
 # Gradient Boosting Meta Tree
 
-This repository is based on the BayesML repository (https://github.com/bayesml/BayesML) and provides an implementation of the Gradient Boosting Meta Tree (GBMT) algorithm, including experiment scripts, benchmark notebooks, and utility code for regression tasks.
+This repository provides an implementation of the Gradient Boosting Meta Tree (GBMT) algorithm, including experiment scripts, benchmark notebooks, and utility code for regression tasks.
+Our paper is presented in IEEE MLSP 2025 (https://2025.ieeemlsp.org/en/).
+Codes in this repository are based on the BayesML repository (https://github.com/bayesml/BayesML).
 
 
 ## Directory Structure

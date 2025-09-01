@@ -6,7 +6,7 @@ pandas
 jupyter
 seaborn
 tqdm
-joblib
 ipython
+ipykernel
 notebook
 pytest
